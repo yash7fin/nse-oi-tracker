@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>NSE Total OI Change (Call & Put)</title>
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
+    button { padding: 10px 20px; font-size: 16px; margin: 10px; }
+    .result { font-size: 18px; margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <h2>NSE Option Chain – Total OI Change (Live)</h2>
+  <button onclick="getOI()">Get OI Data</button>
+  <div id="output" class="result"></div>
+
+  <script>
+    async function getOI() {
+      const out = document.getElementById("output");
+      out.innerHTML = "Fetching data...";
+      try {
+        const res = await fetch("https://www.nseindia.com/api/option-chain-indices?symbol=NIFTY", {
+          headers: {
+            "User-Agent": "Mozilla/5.0",
+            "Accept": "application/json",
+            "X-Requested-With": "XMLHttpRequest"
+          },
+          mode: "cors"
+        });
+        if (!res.ok) throw new Error("Response not OK");
+        const data = await res.json();
+        let ceChange = 0, peChange = 0;
+        data.records.data.forEach(item => {
+          if (item.CE) ceChange += item.CE.changeinOpenInterest || 0;
+          if (item.PE) peChange += item.PE.changeinOpenInterest || 0;
+        });
+        out.innerHTML =
+          `<b>Total Call OI Change:</b> ${ceChange.toLocaleString()}<br>` +
+          `<b>Total Put OI Change:</b> ${peChange.toLocaleString()}<br><br>` +
+          (peChange > ceChange
+            ? "<span style='color:green'>Bullish Bias (Put OI rising)</span>"
+            : "<span style='color:red'>Bearish Bias (Call OI rising)</span>");
+      } catch (e) {
+        out.innerHTML = "⚠️ Error fetching data.<br>Please open NSE site once, then refresh this page.";
+      }
+    }
+  </script>
+</body>
+</html>
